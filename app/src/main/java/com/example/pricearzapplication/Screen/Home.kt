@@ -2,11 +2,13 @@ package com.example.pricearzapplication.Screen
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,10 +23,15 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -44,8 +51,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.pricearzapplication.Gold.ApiClient
 import com.example.pricearzapplication.R
 import com.example.pricearzapplication.DataMode.GoldData.Cryptocurrency
@@ -86,6 +98,7 @@ fun HomeScree() {
             }
             if (responce.isSuccessful) {
                 withContext(Dispatchers.Main) {
+                    loading.value = false
                     Crypto.value = responce.body()!!.data.cryptocurrencies
                     Arz.value = responce.body()!!.data.currencies
                     Gold.value = responce.body()!!.data.golds
@@ -108,41 +121,79 @@ fun HomeScree() {
             }
         }
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF7F7F7))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.4f)
-                .background(Color(0xFF293DF6)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = TxtDate,
-                style = h1,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(5.dp)
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(Color(0xFF5764DA))
-                    .padding(9.dp)
-            )
-            Text(
-                text = TxtTime,
-                style = h3,
-                color = Color.White,
-            )
+    AnimatedVisibility(loading.value) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            loading()
         }
-        TabHome()
-
-
     }
+    AnimatedVisibility(!loading.value) {
+        Scaffold(
+            topBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xff5764DA))
+                        .padding(horizontal = 9.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(
+                            imageVector = Icons.Rounded.Email,
+                            contentDescription = " ", tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "قیمت لحظه ای انوع ارز",
+                        style = h1,
+                        color = Color.White
+                    )
+
+                }
+            }
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it)
+                    .background(Color(0xFFF7F7F7))
+            ) {
+                loading()
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.2f)
+                        .background(Color(0xFF0F27FD)),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = TxtDate,
+                        style = h1,
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth(0.8f)
+                            .padding(5.dp)
+                            .clip(RoundedCornerShape(22.dp))
+                            .background(Color(0xFF5764DA))
+                            .padding(9.dp)
+                    )
+                    Text(
+                        text = TxtTime,
+                        style = h3,
+                        color = Color.White,
+                    )
+                }
+                TabHome()
+
+
+            }
+
+        }
+    }
+
+
 }
 
 
@@ -196,7 +247,7 @@ fun TabHome() {
             containerColor = Color(0xffffffff),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 8.dp)
                 .clip(RoundedCornerShape(15.dp))
         ) {
             item.forEachIndexed { index, tab ->
@@ -254,7 +305,7 @@ fun Gold(Responce: List<Gold>) {
 fun Currency(Responce: List<Currency>) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         itemsIndexed(Responce) { index, item ->
-            ItemProduct(lable = item.label, price = item.price)
+            ItemProduct(lable = item.label, price = item.price / 10)
         }
     }
 }
@@ -280,18 +331,39 @@ fun ItemProduct(lable: String, price: Int) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text =String.format("%,d", price),
-                style = h2,
-                color = Color.DarkGray
-            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Absolute.Center
+            ) {
+                if (lable=="بیت کوین"){
+                    Text(text = "دلار",
+                        style = h3,
+                        color = Color.DarkGray
+                        )
+                }
+                else{
+                Icon(painterResource(id = R.drawable.toman), contentDescription ="",
+                    Modifier.size(22.dp),
+                    tint = Color.DarkGray
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text =String.format("%,d", price) ,
+                    style = h2,
+                    color = Color.DarkGray
+                )
+            }
+
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
                 Text(
                     text = lable,
                     color = Color.Black,
-                    style = h2
+                    style = h1,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val icon = when (lable) {
@@ -299,7 +371,7 @@ fun ItemProduct(lable: String, price: Int) {
                     "درهم" -> R.drawable.ic_derham
                     "پوند" -> R.drawable.ic_pond
                     "یورو" -> R.drawable.ic_uro
-                    "طلا 18 عیار" -> R.drawable.ic_18
+                    "طلا 18عیار" -> R.drawable.ic_18
                     "طلا 24 عیار" -> R.drawable.ic_24
                     "تتر" -> R.drawable.ic_usd
                     "بیت کوین" -> R.drawable.ic_btc
@@ -312,5 +384,22 @@ fun ItemProduct(lable: String, price: Int) {
                 )
             }
         }
+    }
+}
+
+val loading = mutableStateOf(true)
+
+@Composable
+fun loading() {
+    val ee by remember {
+        loading
+    }
+    if (ee) {
+        val composetion by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
+        LottieAnimation(
+            composition = composetion,
+            iterations = LottieConstants.IterateForever,
+
+            )
     }
 }

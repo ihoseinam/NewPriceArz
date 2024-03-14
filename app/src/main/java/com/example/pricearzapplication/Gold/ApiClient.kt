@@ -1,17 +1,16 @@
-package com.example.pricearzapplication
+package com.example.pricearzapplication.Gold
 
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.create
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
     private const val BUSE_URL ="http://tools.daneshjooyar.com/api/v1/"
 
-    val api:GoldInterface by lazy {
+    val api: GoldInterface by lazy {
         val logging = HttpLoggingInterceptor()
         logging.setLevel(HttpLoggingInterceptor.Level.BODY)
 

@@ -2,6 +2,7 @@ package com.example.pricearzapplication.Screen
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,16 +21,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material.icons.outlined.ShoppingCart
-import androidx.compose.material.icons.rounded.Home
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.material3.Divider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -42,16 +38,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.example.pricearzapplication.ApiClient
+import com.example.pricearzapplication.Gold.ApiClient
 import com.example.pricearzapplication.R
-import com.example.pricearzapplication.data.Cryptocurrency
-import com.example.pricearzapplication.data.Currency
-import com.example.pricearzapplication.data.Gold
+import com.example.pricearzapplication.DataMode.GoldData.Cryptocurrency
+import com.example.pricearzapplication.DataMode.GoldData.Currency
+import com.example.pricearzapplication.DataMode.GoldData.Gold
+import com.example.pricearzapplication.Time.TimeClient
+import com.example.pricearzapplication.ui.theme.font_medium
+import com.example.pricearzapplication.ui.theme.h1
+import com.example.pricearzapplication.ui.theme.h2
+import com.example.pricearzapplication.ui.theme.h3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -59,49 +63,84 @@ import kotlinx.coroutines.withContext
 var Crypto = mutableStateOf(emptyList<Cryptocurrency>())
 var Gold = mutableStateOf(emptyList<Gold>())
 var Arz = mutableStateOf(emptyList<Currency>())
+val time = mutableStateOf("درحال بارگیری ...")
+val DateTime = mutableStateOf("در حال بارگیری..")
 
 @Composable
 fun HomeScree() {
-    val context = LocalContext.current
+    val TxtTime by remember {
+        time
+    }
+    val TxtDate by remember {
+        DateTime
+    }
+
     val scope = rememberCoroutineScope()
     LaunchedEffect(true) {
-        scope.launch {
+        scope.launch(Dispatchers.IO) {
             val responce = try {
                 ApiClient.api.getAllItem()
             } catch (e: Exception) {
                 Log.e("pasi", "erorr")
-                Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
                 return@launch
             }
             if (responce.isSuccessful) {
-                Log.e("pasi", responce.body()!!.message)
                 withContext(Dispatchers.Main) {
                     Crypto.value = responce.body()!!.data.cryptocurrencies
                     Arz.value = responce.body()!!.data.currencies
                     Gold.value = responce.body()!!.data.golds
+                    time.value = responce.body()!!.message
                 }
             }
 
         }
+        launch(Dispatchers.IO) {
+            val responce = try {
+                TimeClient.aoi.getTime(true)
+            } catch (e: Exception) {
+                return@launch
+            }
+            if (responce.isSuccessful) {
+                withContext(Dispatchers.Main) {
+                    val date = responce.body()!!.date
+                    DateTime.value = "${date.l} ${date.j} ${date.F} ${date.Y}"
+                }
+            }
+        }
     }
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFF7F7F7))
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .weight(3.0f)
-                .background(Color.Blue)
+                .fillMaxWidth()
+                .fillMaxHeight(0.4f)
+                .background(Color(0xFF293DF6)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Text(text = "sfhk")
+            Text(
+                text = TxtDate,
+                style = h1,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(5.dp)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(Color(0xFF5764DA))
+                    .padding(9.dp)
+            )
+            Text(
+                text = TxtTime,
+                style = h3,
+                color = Color.White,
+            )
         }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .weight(7.0f)
-        ) {
-            TabHome()
-        }
+        TabHome()
+
 
     }
 }
@@ -112,19 +151,14 @@ fun HomeScree() {
 fun TabHome() {
     val item = listOf(
         Tab(
-            "crypro",
-            Icons.Rounded.Info,
-            Icons.Outlined.Info,
+            "کریپتو",
         ),
         Tab(
-            "Arz",
-            Icons.Rounded.Home,
-            Icons.Outlined.Home,
-        ),
+            "طلا",
+
+            ),
         Tab(
-            "gold",
-            Icons.Rounded.ShoppingCart,
-            Icons.Outlined.ShoppingCart,
+            "ارز",
         )
     )
     var selectedTabIndex by remember {
@@ -139,6 +173,7 @@ fun TabHome() {
     LaunchedEffect(pagerstate.currentPage) {
         selectedTabIndex = pagerstate.currentPage
     }
+
     val cr by remember {
         Crypto
     }
@@ -155,20 +190,27 @@ fun TabHome() {
         modifier = Modifier
             .fillMaxSize()
     ) {
-        TabRow(selectedTabIndex = selectedTabIndex) {
+        TabRow(
+            selectedTabIndex = selectedTabIndex,
+            contentColor = Color.Black,
+            containerColor = Color(0xffffffff),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .clip(RoundedCornerShape(15.dp))
+        ) {
             item.forEachIndexed { index, tab ->
-                Tab(selected = selectedTabIndex == index,
+                Tab(
+                    selectedContentColor = Color.Black,
+                    unselectedContentColor = Color.DarkGray,
+                    selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
                     text = {
-                        Text(text = tab.name)
+                        Text(
+                            text = tab.name,
+                            style = h3
+                        )
                     },
-                    icon = {
-                        if (selectedTabIndex == index) {
-                            Icon(tab.selectedIcon, contentDescription = "")
-                        } else {
-                            Icon(tab.unselectedIcon, contentDescription = "")
-                        }
-                    }
                 )
             }
         }
@@ -221,8 +263,9 @@ fun Currency(Responce: List<Currency>) {
 @Composable
 fun ItemProduct(lable: String, price: Int) {
     Card(
+        shape = RoundedCornerShape(10.dp),
         modifier = Modifier
-            .padding(horizontal = 2.dp, vertical = 3.dp)
+            .padding(horizontal = 4.dp, vertical = 3.dp)
             .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(12.dp),
         colors = CardDefaults.cardColors(
@@ -231,17 +274,25 @@ fun ItemProduct(lable: String, price: Int) {
     ) {
         Row(
             modifier = Modifier
-                .padding(8.dp)
+                .padding(12.dp)
                 .fillMaxWidth()
                 .padding(horizontal = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(text = price.toString())
+            Text(
+                text =String.format("%,d", price),
+                style = h2,
+                color = Color.DarkGray
+            )
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = lable)
+                Text(
+                    text = lable,
+                    color = Color.Black,
+                    style = h2
+                )
                 Spacer(modifier = Modifier.width(8.dp))
                 val icon = when (lable) {
                     "دلار" -> R.drawable.ic_dolar

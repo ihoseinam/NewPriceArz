@@ -1,6 +1,6 @@
-package com.example.pricearzapplication
+package com.example.pricearzapplication.Gold
 
-import com.example.pricearzapplication.data.MainModel
+import com.example.pricearzapplication.DataMode.GoldData.MainModel
 import retrofit2.Response
 import retrofit2.http.GET
 

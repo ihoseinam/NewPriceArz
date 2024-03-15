@@ -5,6 +5,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.sp
 import com.example.pricearzapplication.R
 
@@ -21,14 +22,17 @@ val h1 = TextStyle(
     fontFamily = font_bold,
     fontWeight = FontWeight.Medium,
     fontSize = 20.sp,
-    lineHeight = 25.sp
+    lineHeight = 25.sp,
+    textDirection = TextDirection.Ltr
 )
 
 val h2 =TextStyle(
     fontFamily = font_standard,
     fontWeight = FontWeight.Medium,
     fontSize = 18.sp,
-    lineHeight = 25.sp
+    lineHeight = 25.sp,
+    textDirection = TextDirection.Ltr
+
 )
 val h3 =TextStyle(
     fontFamily = font_medium,
@@ -36,6 +40,7 @@ val h3 =TextStyle(
     fontSize = 16.sp,
     lineHeight = 24.sp,
     letterSpacing = 0.5.sp,
+    textDirection = TextDirection.Ltr
 )
 
 // Set of Material typography styles to start with

@@ -16,15 +16,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             navController = rememberNavController()
-
                 Column(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     SetUpNAvGraph(navController =navController )
             }
-
-
         }
     }
 
 }
+
+

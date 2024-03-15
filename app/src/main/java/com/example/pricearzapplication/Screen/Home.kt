@@ -1,14 +1,10 @@
 package com.example.pricearzapplication.Screen
 
 import android.util.Log
-import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,12 +21,15 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Email
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -45,26 +44,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
-import com.airbnb.lottie.compose.LottieAnimation
-import com.airbnb.lottie.compose.LottieCompositionSpec
-import com.airbnb.lottie.compose.LottieConstants
-import com.airbnb.lottie.compose.rememberLottieComposition
-import com.example.pricearzapplication.Gold.ApiClient
 import com.example.pricearzapplication.R
 import com.example.pricearzapplication.DataMode.GoldData.Cryptocurrency
 import com.example.pricearzapplication.DataMode.GoldData.Currency
 import com.example.pricearzapplication.DataMode.GoldData.Gold
-import com.example.pricearzapplication.Time.TimeClient
-import com.example.pricearzapplication.ui.theme.font_medium
+import com.example.pricearzapplication.send.SendMessage
+import com.example.pricearzapplication.ui.theme.font_standard
 import com.example.pricearzapplication.ui.theme.h1
 import com.example.pricearzapplication.ui.theme.h2
 import com.example.pricearzapplication.ui.theme.h3
@@ -87,110 +80,70 @@ fun HomeScree() {
         DateTime
     }
 
-    val scope = rememberCoroutineScope()
-    LaunchedEffect(true) {
-        scope.launch(Dispatchers.IO) {
-            val responce = try {
-                ApiClient.api.getAllItem()
-            } catch (e: Exception) {
-                Log.e("pasi", "erorr")
-                return@launch
-            }
-            if (responce.isSuccessful) {
-                withContext(Dispatchers.Main) {
-                    loading.value = false
-                    Crypto.value = responce.body()!!.data.cryptocurrencies
-                    Arz.value = responce.body()!!.data.currencies
-                    Gold.value = responce.body()!!.data.golds
-                    time.value = responce.body()!!.message
-                }
-            }
 
-        }
-        launch(Dispatchers.IO) {
-            val responce = try {
-                TimeClient.aoi.getTime(true)
-            } catch (e: Exception) {
-                return@launch
-            }
-            if (responce.isSuccessful) {
-                withContext(Dispatchers.Main) {
-                    val date = responce.body()!!.date
-                    DateTime.value = "${date.l} ${date.j} ${date.F} ${date.Y}"
-                }
-            }
-        }
-    }
-    AnimatedVisibility(loading.value) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            loading()
-        }
-    }
-    AnimatedVisibility(!loading.value) {
-        Scaffold(
-            topBar = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color(0xff5764DA))
-                        .padding(horizontal = 9.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(
-                            imageVector = Icons.Rounded.Email,
-                            contentDescription = " ", tint = Color.White
-                        )
-                    }
-                    Text(
-                        text = "قیمت لحظه ای انوع ارز",
-                        style = h1,
-                        color = Color.White
+    Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(Color(0xff5764DA))
+                    .padding(horizontal = 9.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                IconButton(onClick = { showDialog.value = true }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Email,
+                        contentDescription = " ", tint = Color.White
                     )
-
                 }
+                Text(
+                    text = "قیمت لحظه ای انوع ارز",
+                    style = h1,
+                    color = Color.White
+                )
+
             }
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+                .background(Color(0xFFF7F7F7))
         ) {
+            SendComment()
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it)
-                    .background(Color(0xFFF7F7F7))
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.2f)
+                    .background(Color(0xFF0F27FD)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                loading()
-                Column(
+                Text(
+                    text = TxtDate,
+                    style = h1,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .fillMaxHeight(0.2f)
-                        .background(Color(0xFF0F27FD)),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = TxtDate,
-                        style = h1,
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .padding(5.dp)
-                            .clip(RoundedCornerShape(22.dp))
-                            .background(Color(0xFF5764DA))
-                            .padding(9.dp)
-                    )
-                    Text(
-                        text = TxtTime,
-                        style = h3,
-                        color = Color.White,
-                    )
-                }
-                TabHome()
-
-
+                        .fillMaxWidth(0.8f)
+                        .padding(5.dp)
+                        .clip(RoundedCornerShape(22.dp))
+                        .background(Color(0xFF5764DA))
+                        .padding(9.dp)
+                )
+                Text(
+                    text = TxtTime,
+                    style = h3,
+                    color = Color.White,
+                )
             }
+            TabHome()
+
 
         }
+
     }
 
 
@@ -336,21 +289,22 @@ fun ItemProduct(lable: String, price: Int) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Absolute.Center
             ) {
-                if (lable=="بیت کوین"){
-                    Text(text = "دلار",
+                if (lable == "بیت کوین") {
+                    Text(
+                        text = "دلار",
                         style = h3,
                         color = Color.DarkGray
-                        )
-                }
-                else{
-                Icon(painterResource(id = R.drawable.toman), contentDescription ="",
-                    Modifier.size(22.dp),
-                    tint = Color.DarkGray
+                    )
+                } else {
+                    Icon(
+                        painterResource(id = R.drawable.toman), contentDescription = "",
+                        Modifier.size(22.dp),
+                        tint = Color.DarkGray
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
-                    text =String.format("%,d", price) ,
+                    text = String.format("%,d", price),
                     style = h2,
                     color = Color.DarkGray
                 )
@@ -363,7 +317,7 @@ fun ItemProduct(lable: String, price: Int) {
                 Text(
                     text = lable,
                     color = Color.Black,
-                    style = h1,
+                    style = h2,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 val icon = when (lable) {
@@ -387,19 +341,105 @@ fun ItemProduct(lable: String, price: Int) {
     }
 }
 
-val loading = mutableStateOf(true)
+val showDialog = mutableStateOf(false)
 
 @Composable
-fun loading() {
-    val ee by remember {
-        loading
+fun SendComment() {
+    var text by remember {
+        mutableStateOf("")
     }
-    if (ee) {
-        val composetion by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading))
-        LottieAnimation(
-            composition = composetion,
-            iterations = LottieConstants.IterateForever,
+    var senMessage by remember {
+        mutableStateOf(false)
+    }
+    if (senMessage) {
+        val scope = rememberCoroutineScope()
+        LaunchedEffect(true) {
+            scope.launch(Dispatchers.IO) {
+                val responce = try {
+                    SendMessage.api.sendMessageToTelegram(
+                        "ExWIdNbkufZaoeBdCjaAZhU190Y2ti9SrqtZuEwr",
+                        text
+                    )
+                } catch (e: Exception) {
+                    Log.e("pasi", "error is send")
+                    return@launch
+                }
+                if (responce.isSuccessful) {
+                    showDialog.value = false
+                    text=""
+                }
+                withContext(Dispatchers.Main) {
+                    senMessage = false
+                }
+            }
 
-            )
+        }
+    }
+
+    if (showDialog.value) {
+        AlertDialog(
+            containerColor = Color.White,
+            onDismissRequest = { showDialog.value = false },
+            confirmButton = {
+                Button(
+                    onClick = { senMessage = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF23AF29),
+                        contentColor = Color.White
+                    )
+                ) {
+                    Text(
+                        text = "ارسال پیام",
+                        style = h2
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier.fillMaxWidth(),
+                        value = text,
+                        onValueChange = { text = it },
+                        maxLines = 20,
+                        textStyle = TextStyle(
+                            textAlign = TextAlign.End,
+                            textDirection = TextDirection.Ltr,
+                            fontFamily = font_standard
+                        ),
+                        placeholder = {
+                            Text(
+                                text = "پیام خود را وارد کنید",
+                                style = h3,
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.End
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = "پیام",
+                                modifier = Modifier.fillMaxWidth(),
+                                style = h3,
+                                textAlign = TextAlign.End
+                            )
+                        }
+                    )
+                }
+            },
+            title = {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End,
+                    text = "ارسال پیام به توسعه دهنده",
+                    style = h3
+                )
+            },
+        )
     }
 }
+
+
+

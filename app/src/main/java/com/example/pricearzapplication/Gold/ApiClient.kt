@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 
 object ApiClient {
 
-    private const val BUSE_URL ="http://tools.daneshjooyar.com/api/v1/"
+    private const val BUSE_URL ="https://tools.daneshjooyar.com/api/v1/"
 
     val api: GoldInterface by lazy {
         val logging = HttpLoggingInterceptor()

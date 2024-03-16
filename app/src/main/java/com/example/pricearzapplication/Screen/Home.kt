@@ -1,16 +1,20 @@
 package com.example.pricearzapplication.Screen
 
 import android.util.Log
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,11 +30,13 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -44,18 +50,20 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.unit.dp
-import com.example.pricearzapplication.R
 import com.example.pricearzapplication.DataMode.GoldData.Cryptocurrency
 import com.example.pricearzapplication.DataMode.GoldData.Currency
 import com.example.pricearzapplication.DataMode.GoldData.Gold
+import com.example.pricearzapplication.R
 import com.example.pricearzapplication.send.SendMessage
 import com.example.pricearzapplication.ui.theme.font_standard
 import com.example.pricearzapplication.ui.theme.h1
@@ -69,24 +77,23 @@ var Crypto = mutableStateOf(emptyList<Cryptocurrency>())
 var Gold = mutableStateOf(emptyList<Gold>())
 var Arz = mutableStateOf(emptyList<Currency>())
 val time = mutableStateOf("درحال بارگیری ...")
-val DateTime = mutableStateOf("در حال بارگیری..")
+val timeRozf = mutableStateOf("")
+val timeRoza = mutableStateOf("")
+val timeMah = mutableStateOf("")
+val timeSal = mutableStateOf("")
 
 @Composable
 fun HomeScree() {
-    val TxtTime by remember {
-        time
-    }
-    val TxtDate by remember {
-        DateTime
-    }
-
-
+    val snackbarHostState = remember { SnackbarHostState() }
     Scaffold(
+        snackbarHost = {
+            SnackbarHost(hostState = snackbarHostState)
+        },
         topBar = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xff5764DA))
+                    .background(Color(0xFFFFFFFF))
                     .padding(horizontal = 9.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -94,50 +101,60 @@ fun HomeScree() {
                 IconButton(onClick = { showDialog.value = true }) {
                     Icon(
                         imageVector = Icons.Rounded.Email,
-                        contentDescription = " ", tint = Color.White
+                        contentDescription = " ", tint = Color(0xFF8D2222)
                     )
                 }
                 Text(
                     text = "قیمت لحظه ای انوع ارز",
                     style = h1,
-                    color = Color.White
+                    color = Color.DarkGray
                 )
 
             }
-        }
+        },
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(it)
-                .background(Color(0xFFF7F7F7))
+                .background(Color(0xFFFFFFFF))
         ) {
-            SendComment()
-            Column(
+            SendComment(snackbarHostState)
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .fillMaxHeight(0.2f)
-                    .background(Color(0xFF0F27FD)),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                    .fillMaxHeight(0.15f)
+                    .background(Color(0xFFF5F4F2)),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = TxtDate,
-                    style = h1,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(5.dp)
-                        .clip(RoundedCornerShape(22.dp))
-                        .background(Color(0xFF5764DA))
-                        .padding(9.dp)
-                )
-                Text(
-                    text = TxtTime,
-                    style = h3,
-                    color = Color.White,
-                )
+                        .fillMaxSize(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp)
+                            .padding(vertical = 10.dp, horizontal = 8.dp)
+                            .clip(RoundedCornerShape(15.dp))
+                            .background(Color(0xFFFFFFFF)),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        val item = listOf<String>(
+                            timeSal.value,
+                            timeMah.value,
+                            timeRoza.value,
+                            timeRozf.value,
+                        )
+                        for (items in item) {
+                            ItemDate(text = items)
+                        }
+
+                    }
+
+                }
             }
             TabHome()
 
@@ -195,18 +212,25 @@ fun TabHome() {
             .fillMaxSize()
     ) {
         TabRow(
-            selectedTabIndex = selectedTabIndex,
-            contentColor = Color.Black,
-            containerColor = Color(0xffffffff),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
-                .clip(RoundedCornerShape(15.dp))
+                .padding(horizontal = 4.dp),
+            indicator = {},
+            selectedTabIndex = selectedTabIndex,
+            containerColor = Color(0xffF5F4F8),
         ) {
             item.forEachIndexed { index, tab ->
                 Tab(
-                    selectedContentColor = Color.Black,
-                    unselectedContentColor = Color.DarkGray,
+                    modifier = Modifier
+                        .padding(bottom = 9.dp, start = 4.dp, end = 4.dp)
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (selectedTabIndex == index)
+                                Color(0xFF8D2222)
+                            else Color.White
+                        ),
+                    selectedContentColor = Color.White,
+                    unselectedContentColor = Color.Black,
                     selected = selectedTabIndex == index,
                     onClick = { selectedTabIndex = index },
                     text = {
@@ -224,14 +248,39 @@ fun TabHome() {
                 .fillMaxWidth()
                 .weight(1f)
         ) {
-            when (it) {
-                0 -> Crypto(cr)
-                1 -> Gold(tala)
-                2 -> Currency(arz)
+            Column {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    Text(
+                        text = time.value,
+                        textAlign = TextAlign.End,
+                        fontFamily = font_standard,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(9.dp))
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_update),
+                        contentDescription = "",
+                        Modifier.size(30.dp),
+                        tint = Color.DarkGray,
+                    )
+                }
+                Spacer(modifier = Modifier.height(3.dp))
+                when (it) {
+                    0 -> Crypto(cr)
+                    1 -> Gold(tala)
+                    2 -> Currency(arz)
+                }
             }
+
         }
     }
-
 
 }
 
@@ -266,25 +315,18 @@ fun Currency(Responce: List<Currency>) {
 
 @Composable
 fun ItemProduct(lable: String, price: Int) {
-    Card(
-        shape = RoundedCornerShape(10.dp),
+    Column(
         modifier = Modifier
-            .padding(horizontal = 4.dp, vertical = 3.dp)
-            .fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+            .fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
-                .padding(12.dp)
+                .padding(horizontal = 10.dp, vertical = 13.dp)
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 5.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Absolute.Center
@@ -303,17 +345,20 @@ fun ItemProduct(lable: String, price: Int) {
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
+                val e = if (lable == "تتر") {
+                    price / 10
+                } else {
+                    price
+                }
                 Text(
-                    text = String.format("%,d", price),
+                    text = String.format("%,d", e),
                     style = h2,
                     color = Color.DarkGray
                 )
             }
-
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-
                 Text(
                     text = lable,
                     color = Color.Black,
@@ -325,11 +370,9 @@ fun ItemProduct(lable: String, price: Int) {
                     "درهم" -> R.drawable.ic_derham
                     "پوند" -> R.drawable.ic_pond
                     "یورو" -> R.drawable.ic_uro
-                    "طلا 18عیار" -> R.drawable.ic_18
-                    "طلا 24 عیار" -> R.drawable.ic_24
-                    "تتر" -> R.drawable.ic_usd
+                    "تتر" -> R.drawable.ic_usdt
                     "بیت کوین" -> R.drawable.ic_btc
-                    else -> R.drawable.ic_24
+                    else -> R.drawable.ic_gold
                 }
                 Image(
                     painter = painterResource(icon),
@@ -338,35 +381,69 @@ fun ItemProduct(lable: String, price: Int) {
                 )
             }
         }
+
+        Divider(
+            modifier = Modifier
+                .fillMaxWidth()
+                .alpha(0.4f)
+                .padding(horizontal = 12.dp),
+            thickness = 0.2.dp,
+            color = Color.DarkGray
+        )
     }
+
 }
+
 
 val showDialog = mutableStateOf(false)
 
 @Composable
-fun SendComment() {
+fun SendComment(snackbarHostState: SnackbarHostState) {
     var text by remember {
         mutableStateOf("")
     }
     var senMessage by remember {
         mutableStateOf(false)
     }
+    var Loading by remember {
+        mutableStateOf(false)
+    }
     if (senMessage) {
         val scope = rememberCoroutineScope()
-        LaunchedEffect(true) {
+        LaunchedEffect(senMessage) {
             scope.launch(Dispatchers.IO) {
                 val responce = try {
                     SendMessage.api.sendMessageToTelegram(
                         "ExWIdNbkufZaoeBdCjaAZhU190Y2ti9SrqtZuEwr",
-                        text
+                        "new price arz message :\n $text"
+
                     )
                 } catch (e: Exception) {
-                    Log.e("pasi", "error is send")
+                    withContext(Dispatchers.Main) {
+                        snackbarHostState.showSnackbar(
+                            message = e.message.toString(),
+                            actionLabel = "Close"
+                        )
+                    }
                     return@launch
                 }
                 if (responce.isSuccessful) {
-                    showDialog.value = false
-                    text=""
+                    withContext(Dispatchers.Main) {
+                        Loading = false
+                        showDialog.value = false
+                        text = ""
+                        snackbarHostState.showSnackbar(
+                            message = responce.body()!!.message,
+                            actionLabel = "Close"
+                        )
+                    }
+                } else {
+                    withContext(Dispatchers.Main) {
+                        snackbarHostState.showSnackbar(
+                            message = responce.body()!!.message,
+                            actionLabel = "Close"
+                        )
+                    }
                 }
                 withContext(Dispatchers.Main) {
                     senMessage = false
@@ -375,14 +452,19 @@ fun SendComment() {
 
         }
     }
-
     if (showDialog.value) {
         AlertDialog(
             containerColor = Color.White,
-            onDismissRequest = { showDialog.value = false },
+            onDismissRequest = {
+                showDialog.value = false
+                Loading = false
+            },
             confirmButton = {
                 Button(
-                    onClick = { senMessage = true },
+                    onClick = {
+                        Loading = true
+                        senMessage = true
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -390,10 +472,21 @@ fun SendComment() {
                         contentColor = Color.White
                     )
                 ) {
-                    Text(
-                        text = "ارسال پیام",
-                        style = h2
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        AnimatedVisibility(Loading) {
+                            Loading3Dot()
+                        }
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "ارسال پیام",
+                            style = h2
+                        )
+                    }
+
                 }
             },
             text = {
@@ -437,6 +530,28 @@ fun SendComment() {
                     style = h3
                 )
             },
+        )
+    }
+}
+
+@Composable
+fun ItemDate(text: String) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(
+            containerColor =
+            Color(0xFFFFFFFF)
+        ),
+        modifier = Modifier.padding(5.dp),
+        elevation = CardDefaults.cardElevation(12.dp),
+    ) {
+        Text(
+            modifier = Modifier
+                .padding(4.dp)
+                .padding(vertical = 5.dp, horizontal = 14.dp),
+            text = text,
+            style = h2,
+            color = Color.Black,
         )
     }
 }

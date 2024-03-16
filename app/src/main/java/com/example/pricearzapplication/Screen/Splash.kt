@@ -3,29 +3,24 @@ package com.example.pricearzapplication.Screen
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
-import android.window.SplashScreen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
@@ -44,10 +39,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavHostController
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -57,9 +52,10 @@ import com.example.pricearzapplication.Gold.ApiClient
 import com.example.pricearzapplication.R
 import com.example.pricearzapplication.Time.TimeClient
 import com.example.pricearzapplication.navigation.Screen
+import com.example.pricearzapplication.ui.theme.font_bold
+import com.example.pricearzapplication.ui.theme.font_medium
 import com.example.pricearzapplication.ui.theme.font_standard
 import com.example.pricearzapplication.ui.theme.h1
-import com.example.pricearzapplication.ui.theme.h2
 import com.example.pricearzapplication.ui.theme.h3
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -75,6 +71,7 @@ fun SplashScreen(navHostController: NavHostController) {
     var showButton by remember {
         mutableStateOf(false)
     }
+
     val scope = rememberCoroutineScope()
     LaunchedEffect(refreshe) {
         scope.launch(Dispatchers.IO) {
@@ -95,7 +92,7 @@ fun SplashScreen(navHostController: NavHostController) {
                     Arz.value = responce.body()!!.data.currencies
                     Gold.value = responce.body()!!.data.golds
                     time.value = responce.body()!!.message
-                    delay(1000)
+                    delay(1200)
                     navHostController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Splash.route) {
                             inclusive = true
@@ -110,7 +107,9 @@ fun SplashScreen(navHostController: NavHostController) {
                 }
             }
         }
-        launch(Dispatchers.IO) {
+    }
+    LaunchedEffect(refreshe){
+        scope.launch(Dispatchers.IO) {
             val responce = try {
                 TimeClient.aoi.getTime(true)
             } catch (e: Exception) {
@@ -119,48 +118,85 @@ fun SplashScreen(navHostController: NavHostController) {
             if (responce.isSuccessful) {
                 withContext(Dispatchers.Main) {
                     val date = responce.body()!!.date
-                    DateTime.value = "${date.l} ${date.j} ${date.F} ${date.Y}"
+                    timeRozf.value =date.l
+                    timeRoza.value=date.j
+                    timeMah.value =date.F
+                    timeSal.value=date.Y
                 }
             }
         }
     }
     NoInternetDialog()
-    Column(
+    Box(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        SplashScreen()
-        AnimatedVisibility(refreshe) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-            }
+        Box(modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter){
+            SplashScreen()
         }
         AnimatedVisibility(showButton) {
-            TextButton(onClick = {
-                refreshe = true
-            }) {
-                Icon(
-                    Icons.Rounded.Refresh,
-                    contentDescription = "",
-                    tint = Color.Black
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .padding(11.dp), contentAlignment = Alignment.BottomCenter)
+            {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                    refreshe = true
+                },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2196F3))
+                    ) {
+                    AnimatedVisibility(refreshe) {
+                        Loading3Dot()
+                    }
+                    AnimatedVisibility(!refreshe) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Rounded.Refresh,
+                                contentDescription = "",
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = "تلاش مجدد",
+                                fontFamily = font_standard,
+                                color = Color.White,
+                                fontSize = 18.sp
+                            )
+                        }
+
+                    }
+
+                }
+            }
+        }
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(bottom = 130.dp),
+            contentAlignment = Alignment.BottomCenter){
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(text = "قیمت طلا و ارز",
+                    color = Color(0xFF000000),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = font_bold,
+                    fontSize = 30.sp
                 )
-                Spacer(modifier = Modifier.width(1.dp))
-                Text(
-                    text = "لطفا وضعیت اتصال اینترنت خود را برسی کنید",
-                    fontFamily = font_standard,
-                    color = Color.Black,
-                    fontSize = 14.sp
+                   Text(text = "جدید ترین قیمت ارز و طلای روز جهان",
+                    color = Color.DarkGray,
+                    fontFamily = font_medium,
+                    fontSize = 20.sp,
                 )
+
+
             }
 
-
-            //                Icon(
-            //                    painter = painterResource(id = R.drawable.logo),
-            //                    contentDescription = "",Modifier.size(300.dp,120.dp) ,tint = Color.Black,
-            //
-            //                )
         }
 
     }
@@ -174,7 +210,7 @@ fun SplashScreen() {
     LottieAnimation(
         modifier = Modifier
             .fillMaxWidth()
-            .height(410.dp),
+            .padding(bottom = 130.dp),
         composition = composetion,
         iterations = LottieConstants.IterateForever,
     )
@@ -185,33 +221,39 @@ var showDialogNoInternet = mutableStateOf(false)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoInternetDialog() {
-
     if (showDialogNoInternet.value) {
         ModalBottomSheet(
             containerColor = Color.White,
             onDismissRequest = { showDialogNoInternet.value = false },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(405.dp),
+                .fillMaxHeight(0.47f),
         ) {
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 8.dp),
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                Text(text = "عدم اتصال اینترنت",
+                    style = h1,
+                    color = Color.Red,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.End
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 Image(
                     painter = painterResource(id = R.drawable.network),
                     contentDescription = "",
                 )
-                Spacer(modifier = Modifier.height(5.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "برای ادامه لازم است به اینترنت متصل شوید یا دوباره تلاش کنید",
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                     fontFamily = font_standard
                 )
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.SpaceAround
@@ -248,7 +290,16 @@ fun NoInternetDialog() {
                         )
                     }
                 }
+
             }
         }
     }
+}
+
+@Composable
+fun Loading3Dot(){
+    val composetion by rememberLottieComposition(spec = LottieCompositionSpec.RawRes(R.raw.loading3dotsdark))
+    LottieAnimation(composition = composetion,
+        iterations = LottieConstants.IterateForever
+    )
 }
